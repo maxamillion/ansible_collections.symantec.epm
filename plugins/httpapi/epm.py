@@ -19,7 +19,7 @@ version_added: "2.9"
 import json
 
 from ansible.module_utils.basic import to_text
-from ansible.errors import AnsibleConnectionFailure
+from ansible.errors import AnsibleConnectionFailure, AnsibleAuthenticationFailure
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.plugins.httpapi import HttpApiBase
 from ansible.module_utils.connection import ConnectionError
@@ -28,6 +28,8 @@ BASE_HEADERS = {"Content-Type": "application/json"}
 
 
 class HttpApi(HttpApiBase):
+    import q;
+    @q.t
     def send_request(self, request_method, path, payload=None, headers=None):
         headers = headers if headers else BASE_HEADERS
 
@@ -36,12 +38,28 @@ class HttpApi(HttpApiBase):
             response, response_data = self.connection.send(
                 path, payload, method=request_method, headers=headers
             )
+            import q; q.q(response)
+            import q; q.q(response_data)
             value = self._get_response_value(response_data)
+            import q; q.q(value)
 
             return response.getcode(), self._response_to_json(value)
         except HTTPError as e:
             error = json.loads(e.read())
             return e.code, error
+
+    def login(self, username, password):
+        login_path = '/sepm/api/v1/identity/authenticate'
+        data = { 'username': username, 'password': password }
+
+        response = self.send_request("POST", login_path, payload=data)
+
+        try:
+            self.connection._auth = { 'X-api-token': response['token'] }
+        except KeyError:
+            raise AnsibleAuthenticationFailure(message="Failed to acquire login token.")
+
+        import q; q.q(self.connection._auth)
 
     def _display_request(self, request_method):
         self.connection.queue_message(
@@ -60,6 +78,7 @@ class HttpApi(HttpApiBase):
 
     def update_auth(self, response, response_text):
         cookie = response.info().get("Set-Cookie")
+        import q; q.q(cookie)
         # Set the 'SEC' header
         if "SEC" in cookie:
             return {"SEC": cookie.split(";")[0].split("=")[-1]}
@@ -67,7 +86,9 @@ class HttpApi(HttpApiBase):
         return None
 
     def logout(self):
-        self.send_request("POST", "/auth/logout")
+        if self.connection._auth != None:
+            headers = { 'UserToken': self.connection._auth }
+            self.send_request("POST", "/api/v1/identity/logout", headers=headers)
 
-        # Clean up tokens
-        self.connection._auth = None
+            # Clean up tokens
+            self.connection._auth = None

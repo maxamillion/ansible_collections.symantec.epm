@@ -81,7 +81,7 @@ def main():
         )
 
     else:
-        rules = epm_request.get_by_path("/api/v1/policies/summary/exceptions")
+        rules = epm_request.get_by_path("api/v1/policies/summary/exceptions")
 
         module.exit_json(rules=rules, changed=False)
 

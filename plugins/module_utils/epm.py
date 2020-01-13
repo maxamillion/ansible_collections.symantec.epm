@@ -47,37 +47,35 @@ class EPMRequest(object):
         self.not_rest_data_keys.append("validate_certs")
         self.headers = headers
 
-    def _httpapi_error_handle(self, method, uri, payload=None):
-        # FIXME - make use of handle_httperror(self, exception) where applicable
-        #   https://docs.ansible.com/ansible/latest/network/dev_guide/developing_plugins_network.html#developing-plugins-httpapi
-
-        try:
-            code, response = self.connection.send_request(
-                method, uri, payload=payload, headers=self.headers
-            )
-        except ConnectionError as e:
-            self.module.fail_json(msg="connection error occurred: {0}".format(e))
-        except CertificateError as e:
-            self.module.fail_json(msg="certificate error occurred: {0}".format(e))
-        except ValueError as e:
-            self.module.fail_json(msg="certificate not found: {0}".format(e))
-
+    def get(self, url, **kwargs):
+        code, response = self.connection.send_request(
+            'GET', url, headers=self.headers
+        )
         return response
 
-    def get(self, url, **kwargs):
-        return self._httpapi_error_handle("GET", url, **kwargs)
-
     def put(self, url, **kwargs):
-        return self._httpapi_error_handle("PUT", url, **kwargs)
+        code, response = self.connection.send_request(
+            'PUT', url, payload=payload, headers=self.headers
+        )
+        return response
 
     def post(self, url, **kwargs):
-        return self._httpapi_error_handle("POST", url, **kwargs)
+        code, response = self.connection.send_request(
+            'POST', url, payload=payload, headers=self.headers
+        )
+        return response
 
     def patch(self, url, **kwargs):
-        return self._httpapi_error_handle("PATCH", url, **kwargs)
+        code, response = self.connection.send_request(
+            'PATCH', url, payload=payload, headers=self.headers
+        )
+        return response
 
     def delete(self, url, **kwargs):
-        return self._httpapi_error_handle("DELETE", url, **kwargs)
+        code, response = self.connection.send_request(
+            'DELETE', url, payload=payload, headers=self.headers
+        )
+        return response
 
     def get_data(self):
         """
@@ -89,6 +87,7 @@ class EPMRequest(object):
         """
         try:
             # FIXME
+            pass
 
         except TypeError as e:
             self.module.fail_json(msg="invalid data type provided: {0}".format(e))
