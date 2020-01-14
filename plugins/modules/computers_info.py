@@ -16,14 +16,14 @@ ANSIBLE_METADATA = {
 }
 DOCUMENTATION = """
 ---
-module: groups_info
-short_description: Obtain information about Symantec Endpoint Protection Manager groups
+module: computers_info
+short_description: Obtain information about Symantec Endpoint Protection Manager computers
 description:
-  - Obtain information about Symantec Endpoint Protection Manager groups
+  - Obtain information about Symantec Endpoint Protection Manager computers
 version_added: "2.9"
 notes:
   - This module does not take any options
-  - This module returns a dict of group data and is meant to be registered to a
+  - This module returns a dict of computer data and is meant to be registered to a
     variable in a Play for conditional use or inspection/debug purposes.
 
 author: Ansible Security Automation Team (@maxamillion) <https://github.com/ansible-security>"
@@ -62,12 +62,14 @@ def main():
         module, headers={"Content-Type": "application/json"}
     )
 
-    groups = epm_request.get_by_path("sepm/api/v1/groups")
+    computers = epm_request.get_by_path("sepm/api/v1/computers")
 
-    if 'content' in groups:
-        module.exit_json(groups=groups['content'], changed=False)
+    if 'content' in computers:
+        module.exit_json(computers=computers['content'], changed=False)
     else:
-        module.fail_json(msg="Unable to query groups data")
+        module.fail_json(msg="Unable to query computers data")
+
+
 
 
 if __name__ == "__main__":
