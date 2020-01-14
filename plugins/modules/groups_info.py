@@ -16,21 +16,15 @@ ANSIBLE_METADATA = {
 }
 DOCUMENTATION = """
 ---
-module: exceptions_info
-short_description: Obtain information about Symantec Endpoint Protection Manager exceptions
+module: groups_info
+short_description: Obtain information about Symantec Endpoint Protection Manager groups
 description:
-  - Obtain information about Symantec Endpoint Protection Manager exceptions
+  - Obtain information about Symantec Endpoint Protection Manager groups
 version_added: "2.9"
-options:
-  id:
-    description:
-      - Obtain only information of the Rule with provided ID
-    required: false
-    type: int
 notes:
-  - You may provide many filters and they will all be applied, except for C(id)
-    as that will return only the Rule identified by the unique ID provided.
-  - FIXME FIXME FIXME ---> not sure about filters yet
+  - This module does not take any options
+  - This module returns a dict of group data and is meant to be registered to a
+    variable in a Play for conditional use or inspection/debug purposes.
 
 author: Ansible Security Automation Team (@maxamillion) <https://github.com/ansible-security>"
 """
@@ -60,13 +54,6 @@ import json
 def main():
 
     argspec = dict(
-        id=dict(required=False, type="int"),
-#       name=dict(required=False, type="str"),
-#       owner=dict(required=False, type="str"),
-#       type=dict(
-#           required=False, choices=["EVENT", "FLOW", "COMMON", "USER"], type="str"
-#       ),
-#       origin=dict(required=False, choices=["SYSTEM", "OVERRIDE", "USER"], type="str"),
     )
 
     module = AnsibleModule(argument_spec=argspec, supports_check_mode=True)
@@ -75,15 +62,9 @@ def main():
         module, headers={"Content-Type": "application/json"}
     )
 
-    if module.params["id"]:
-        rules = epm_request.get_by_path(
-            "api/v1/policies/summary/exceptions/{0}".format(module.params["id"])
-        )
+    groups = epm_request.get_by_path("sepm/api/v1/groups")
 
-    else:
-        rules = epm_request.get_by_path("api/v1/policies/summary/exceptions")
-
-        module.exit_json(rules=rules, changed=False)
+    module.exit_json(groups=groups, changed=False)
 
 
 if __name__ == "__main__":
