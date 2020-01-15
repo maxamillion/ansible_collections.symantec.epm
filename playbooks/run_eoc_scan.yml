@@ -1,0 +1,18 @@
+---
+- name: Run Evidence of Compromise scan via Symantec Endpoint Protection Manager
+  hosts: epm
+  gather_facts: no
+  connection: httpapi
+  vars:
+    ansible_network_os: symantec.epm.epm
+    ansible_user: Admin
+    ansible_httpapi_port: 8446
+    ansible_httpapi_validate_certs: no
+    ansible_httpapi_use_ssl: yes
+  tasks:
+    - name: Query for a list of computers in the inventory to run scan against
+      symantec.epm.computers_info:
+      register: computers_info
+
+    - debug:
+        var: computers_info
