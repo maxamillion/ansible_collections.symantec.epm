@@ -108,8 +108,6 @@ class EPMRequest(object):
 
         return self.delete("/{0}".format(rest_path))
 
-    import q;
-    @q.t
     def post_by_path(self, rest_path, data=None):
         """
         POST with data to path

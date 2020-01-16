@@ -1,5 +1,5 @@
 ---
-- name: Run Evidence of Compromise scan via Symantec Endpoint Protection Manager
+- name: Example use of various Symantec Endpoint Protection Manager modules
   hosts: epm
   gather_facts: no
   connection: httpapi
@@ -19,7 +19,11 @@
       register: groups_info
 
     - name: Schedule Evidence of Compromise scan on endpoints
-      symantec.epm.full_scan:
+      symantec.epm.baseline:
         computers: "{{computers_info['id_list']}}"
         groups: "{{groups_info['id_list']}}"
+
+    - name: Test failure
+      symantec.epm.baseline:
+        computers: "DOES_NOT_EXIST"
 

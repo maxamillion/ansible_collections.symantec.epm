@@ -16,10 +16,10 @@ ANSIBLE_METADATA = {
 }
 DOCUMENTATION = """
 ---
-module: full_scan
-short_description: Schedule an Full Scan on the endpoint(s).
+module: baseline
+short_description: Schedule an Baseline application information upload on the endpoint(s).
 description:
-  - Schedule a Full Scan on the endpoint(s).
+  - Schedule an Baseline application information upload on the endpoint(s).
 version_added: "2.9"
 options:
   computers:
@@ -50,9 +50,8 @@ EXAMPLES = """
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text, to_bytes
 
-from ansible.module_utils.six.moves.urllib.parse import quote
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible_collections.symantec.epm.plugins.module_utils.epm import (
     EPMRequest,
 )
@@ -75,24 +74,24 @@ def main():
         module, headers={"Content-Type": "application/json"}
     )
 
-    query_string= []
+    query_data = {}
 
-    if module.params['groups']:
-        query_string.append('group_ids="{0}"'.format(module.params['groups']))
-    else:
-        query_string.append('group_ids=""')
 
     if module.params['computers']:
-        query_string.append('computer_ids="{0}"'.format(module.params['computers']))
-    else:
-        query_string.append('computer_ids="{0}"')
+        query_data['computer_ids'] = module.params['computers']
 
-    scan_data = epm_request.post_by_path(
-        "sepm/api/v1/command-queue/fullscan?{0}".format('&'.join(query_string)),
+    if module.params['groups']:
+        query_data['group_ids'] = module.params['groups']
+
+    sepm_data = epm_request.post_by_path(
+        "sepm/api/v1/command-queue/baseline?{0}".format(urlencode(query_data)),
         data=False
     )
 
-    module.exit_json(scan_data=scan_data, changed=True)
+    if 'errorCode' in sepm_data:
+        module.fail_json(msg="Failed to schedule Baseline Application Data Upload", sepm_data=sepm_data)
+
+    module.exit_json(sepm_data=sepm_data, changed=True)
 
 
 if __name__ == "__main__":

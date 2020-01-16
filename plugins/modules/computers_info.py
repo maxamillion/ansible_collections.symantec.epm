@@ -21,9 +21,59 @@ short_description: Obtain information about Symantec Endpoint Protection Manager
 description:
   - Obtain information about Symantec Endpoint Protection Manager computers
 version_added: "2.9"
+options:
+  name:
+    description:
+     - The host name of computer. Wild card is supported as '*'.
+    required: false
+    type: str
+  domain:
+    description:
+     - The domain from which to get computer information.
+    required: false
+    type: str
+  mac:
+    description:
+     - The MAC address of computer. Wild card is supported as '*'.
+    required: false
+    type: str
+  os:
+    description:
+     - The list of OS to filter.
+    choices:
+     - CentOs
+     - Debian
+     - Fedora
+     - MacOSX
+     - Oracle
+     - OSX
+     - RedHat
+     - SUSE
+     - Ubuntu
+     - Win10
+     - Win2K
+     - Win7
+     - Win8
+     - Win81
+     - WinEmb7
+     - WinEmb8
+     - WinEmb81
+     - WinFundamental
+     - WinNT
+     - Win2K3
+     - Win2K8
+     - Win2K8R2
+     - Win2K12
+     - Win2K12R2
+     - Win2K16
+     - WinVista
+     - WinXP
+     - WinXPEmb
+     - WinXPProf64
+    required: false
+    type: str
 notes:
-  - This module does not take any options
-  - This module returns a dict of computer data and is meant to be registered to a
+  - This module returns a dict of group data and is meant to be registered to a
     variable in a Play for conditional use or inspection/debug purposes.
 
 author: Ansible Security Automation Team (@maxamillion) <https://github.com/ansible-security>"
@@ -41,11 +91,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
 
 from ansible.module_utils.urls import Request
-from ansible.module_utils.six.moves.urllib.parse import quote
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible_collections.symantec.epm.plugins.module_utils.epm import (
-    EPMRequest,
-)
+from ansible_collections.symantec.epm.plugins.module_utils.epm import EPMRequest
 
 import copy
 import json
@@ -54,27 +102,83 @@ import json
 def main():
 
     argspec = dict(
+        name=dict(required=False, type="str"),
+        domain=dict(required=False, type="str"),
+        mac=dict(required=False, type="str"),
+        os=dict(
+            required=False,
+            type="str",
+            choices=[
+                "CentOs",
+                "Debian",
+                "Fedora",
+                "MacOSX",
+                "Oracle",
+                "OSX",
+                "RedHat",
+                "SUSE",
+                "Ubuntu",
+                "Win10",
+                "Win2K",
+                "Win7",
+                "Win8",
+                "Win81",
+                "WinEmb7",
+                "WinEmb8",
+                "WinEmb81",
+                "WinFundamental",
+                "WinNT",
+                "Win2K3",
+                "Win2K8",
+                "Win2K8R2",
+                "Win2K12",
+                "Win2K12R2",
+                "Win2K16",
+                "WinVista",
+                "WinXP",
+                "WinXPEmb",
+                "WinXPProf64",
+            ],
+        ),
     )
 
     module = AnsibleModule(argument_spec=argspec, supports_check_mode=True)
 
-    epm_request = EPMRequest(
-        module, headers={"Content-Type": "application/json"}
-    )
+    epm_request = EPMRequest(module, headers={"Content-Type": "application/json"})
 
-    computers = epm_request.get_by_path("sepm/api/v1/computers")
+    query_params = {}
 
-    if 'content' in computers:
+    if module.params['name']:
+        query_params['computerName'] = module.params['name']
+
+    if module.params['domain']:
+        query_params['domain'] = module.params['domain']
+
+    if module.params['mac']:
+        query_params['mac'] = module.params['mac']
+
+    if module.params['os']:
+        query_params['os'] = module.params['os']
+
+    if query_params:
+        computers = epm_request.get_by_path('sepm/api/v1/computers?{0}'.format(urlencode(query_params)))
+    else:
+        computers = epm_request.get_by_path('sepm/api/v1/computers')
+
+    import q; q.q(computers)
+
+    if computers.get('content'):
+        if computers.get('totalPages') and computers['totalPages'] > 1:
+            #FIXME - HANDLE AGGRIGATING PAGINATION HERE
+            pass
         id_list = ""
         try:
-            id_list += ','.join([comp['uniqueId'] for comp in computers['content']])
+            id_list += ",".join([comp["id"] for comp in computers["content"]])
         except KeyError:
             module.warn("Unable to compile id_list")
-        module.exit_json(computers=computers['content'], id_list=id_list, changed=False)
+        module.exit_json(computers=computers["content"], id_list=id_list, changed=False)
     else:
-        module.fail_json(msg="Unable to query computers data")
-
-
+        module.fail_json(msg="Unable to query Computers data", sepm_data=computers)
 
 
 if __name__ == "__main__":
