@@ -78,7 +78,7 @@ class HttpApi(HttpApiBase):
     def update_auth(self, response, response_text):
         token = response.info().get("token")
         # Set the 'Authorization' header
-        if not token:
+        if token:
             return { 'Authorization': 'Bearer {0}'.format(token) }
 
         return None
