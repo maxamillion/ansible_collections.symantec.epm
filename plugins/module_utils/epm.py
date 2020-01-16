@@ -47,31 +47,31 @@ class EPMRequest(object):
         self.not_rest_data_keys.append("validate_certs")
         self.headers = headers
 
-    def get(self, url, **kwargs):
+    def get(self, url):
         code, response = self.connection.send_request(
             'GET', url, headers=self.headers
         )
         return response
 
-    def put(self, url, **kwargs):
+    def put(self, url, payload=None):
         code, response = self.connection.send_request(
             'PUT', url, payload=payload, headers=self.headers
         )
         return response
 
-    def post(self, url, **kwargs):
+    def post(self, url, payload=None):
         code, response = self.connection.send_request(
             'POST', url, payload=payload, headers=self.headers
         )
         return response
 
-    def patch(self, url, **kwargs):
+    def patch(self, url, payload=None):
         code, response = self.connection.send_request(
             'PATCH', url, payload=payload, headers=self.headers
         )
         return response
 
-    def delete(self, url, **kwargs):
+    def delete(self, url, payload=None):
         code, response = self.connection.send_request(
             'DELETE', url, payload=payload, headers=self.headers
         )
@@ -108,6 +108,8 @@ class EPMRequest(object):
 
         return self.delete("/{0}".format(rest_path))
 
+    import q;
+    @q.t
     def post_by_path(self, rest_path, data=None):
         """
         POST with data to path
@@ -115,9 +117,9 @@ class EPMRequest(object):
         if data is None:
             data = json.dumps(self.get_data())
         elif data is False:
-            # Because for some reason some QRadar REST API endpoint use the
-            # query string to modify state
             return self.post("/{0}".format(rest_path))
+        elif data:
+            return self.post("/{0}".format(rest_path), payload=json.dumps(data))
         return self.post("/{0}".format(rest_path), payload=data)
 
     def create_update(self, rest_path, data=None):

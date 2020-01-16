@@ -65,7 +65,12 @@ def main():
     computers = epm_request.get_by_path("sepm/api/v1/computers")
 
     if 'content' in computers:
-        module.exit_json(computers=computers['content'], changed=False)
+        id_list = ""
+        try:
+            id_list += ','.join([comp['uniqueId'] for comp in computers['content']])
+        except KeyError:
+            module.warn("Unable to compile id_list")
+        module.exit_json(computers=computers['content'], id_list=id_list, changed=False)
     else:
         module.fail_json(msg="Unable to query computers data")
 

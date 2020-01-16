@@ -14,5 +14,12 @@
       symantec.epm.computers_info:
       register: computers_info
 
-    - debug:
-        var: computers_info
+    - name: Query for a list of groups in the inventory to run scan against
+      symantec.epm.groups_info:
+      register: groups_info
+
+    - name: Schedule Evidence of Compromise scan on endpoints
+      symantec.epm.full_scan:
+        computers: "{{computers_info['id_list']}}"
+        groups: "{{groups_info['id_list']}}"
+
