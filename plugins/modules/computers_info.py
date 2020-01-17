@@ -146,7 +146,9 @@ def main():
 
     epm_request = EPMRequest(module, headers={"Content-Type": "application/json"})
 
-    query_params = {}
+    query_params = {
+        'pageSize': 100
+    }
 
     if module.params['name']:
         query_params['computerName'] = module.params['name']
@@ -160,23 +162,29 @@ def main():
     if module.params['os']:
         query_params['os'] = module.params['os']
 
-    if query_params:
-        computers = epm_request.get_by_path('sepm/api/v1/computers?{0}'.format(urlencode(query_params)))
-    else:
-        computers = epm_request.get_by_path('sepm/api/v1/computers')
+    rest_endpoint = 'sepm/api/v1/computers'
 
-    import q; q.q(computers)
+    request_out = epm_request.get(
+        '{0}?{1}'.format(rest_endpoint, urlencode(query_params))
+    )
 
-    if computers.get('content'):
-        if computers.get('totalPages') and computers['totalPages'] > 1:
-            #FIXME - HANDLE AGGRIGATING PAGINATION HERE
-            pass
+    if 'content' in request_out:
+        list_of_computers = request_out['content']
+        if isinstance(request_out.get('totalPages'), int) and request_out['totalPages'] > 1:
+            for page_num in range(2, request_out['totalPages']+1):
+                query_params['pageIndex'] = page_num
+                page_request_out = epm_request.get(
+                    '{0}?{1}'.format(rest_endpoint, urlencode(query_params))
+                )
+                if 'content' in page_request_out:
+                    list_of_computers.append(page_request_out['content'])
+
         id_list = ""
         try:
-            id_list += ",".join([comp["id"] for comp in computers["content"]])
+            id_list += ",".join([comp["id"] for comp in list_of_computers])
         except KeyError:
             module.warn("Unable to compile id_list")
-        module.exit_json(computers=computers["content"], id_list=id_list, changed=False)
+        module.exit_json(computers=list_of_computers, id_list=id_list, changed=False)
     else:
         module.fail_json(msg="Unable to query Computers data", sepm_data=computers)
 
